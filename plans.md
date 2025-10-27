@@ -6,6 +6,7 @@
 - Add additional tests for edge cases to patch oversights.
 - Finalize the yaku detection module to cover all standard yaku.
 - Complete the scoring module to calculate hand scores based on detected yaku.
+- Modify parse to tolerate precompleted Sets from calls during gameplay.
 - Develop a complete progression that utilizes all currently implemented features.
   - eg. input hand, detect validity, calculate yaku, score hand.
 

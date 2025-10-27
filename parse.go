@@ -9,6 +9,7 @@ func FixedPairValidation(hand []int) (bool, []Set) {
 			hand[id] -= 2
 			valid, sets := ValidateHand(hand)
 			if valid {
+				sets = append([]Set{{Type: Proto, Tiles: []Tile{ParseTile(id, false), ParseTile(id, false)}}}, sets...)
 				return true, sets
 			} else {
 				hand[id] += 2

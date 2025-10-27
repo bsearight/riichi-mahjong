@@ -69,8 +69,7 @@ const (
 )
 
 type Hand struct {
-	counts  [34]int        // Counts of each tile in the hand
-	aspects [34]TileAspect // corresponding aspects of each tile (used for scoring)
+	counts [34]int // Counts of each tile in the hand
 }
 
 type SetType int
