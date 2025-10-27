@@ -49,8 +49,15 @@ func FixedPairValidation(hand []int) (bool, []Set) {
 
 // Backtracking Recursive algorithm to validate hands and return sets formed
 func ValidateHand(hand []int) (bool, []Set) {
-	// Base Case: if hand is empty, return true
-	if len(hand) == 0 {
+	// Base Case: if all counts are 0, return true
+	allZero := true
+	for _, count := range hand {
+		if count > 0 {
+			allZero = false
+			break
+		}
+	}
+	if allZero {
 		return true, nil
 	}
 	// Recurse: Find the first index with count > 0
@@ -84,7 +91,7 @@ func ValidateHand(hand []int) (bool, []Set) {
 			// 	try to form Shuntsu with that tile (if numbered and not 8 or 9) and next two tiles have count > 0, if so decrease counts and recurse with updated hand
 			if id <= 26 { // Numbered tiles
 				rank := id % 9
-				if rank >= 1 && rank <= 7 && hand[id+1] > 0 && hand[id+2] > 0 {
+				if rank >= 0 && rank <= 6 && hand[id+1] > 0 && hand[id+2] > 0 {
 					hand[id]--
 					hand[id+1]--
 					hand[id+2]--

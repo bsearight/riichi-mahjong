@@ -1,5 +1,7 @@
 package main
 
+// Calculate the total han value and list of yaku for a given hand and win context.
+
 // Yaku and Scoring Definition
 type WinContext struct {
 	WinningTile Tile
@@ -28,10 +30,15 @@ var yakuList = []Yaku{
 	Yaku_Chinitsu{},
 	Yaku_Honitsu{},
 	Yaku_Suuankou{},
+	Yaku_Iipeikou{},
+	Yaku_Ryanpeikou{},
+	Yaku_Daisangen{},
+	Yaku_Shousangen{},
 }
 
 var yakuListSpecial = []Yaku{
 	Yaku_Chiitoitsu{},
+	Yaku_KokushiMusou{},
 }
 
 var yakuListBonus = []Yaku{
@@ -90,8 +97,8 @@ type Yaku_Tanyao struct{}
 
 func (y Yaku_Tanyao) Name() string { return "Tanyao (All Simples)" }
 func (y Yaku_Tanyao) Check(hand Hand, sets []Set, winCtx WinContext) (int, bool) {
-	for _, tile := range hand.counts {
-		if ParseTile(tile, false).IsTerminalOrHonor() {
+	for i, count := range hand.counts {
+		if count > 0 && ParseTile(i, false).IsTerminalOrHonor() {
 			return 0, false
 		}
 	}
@@ -182,19 +189,30 @@ type Yaku_Honitsu struct{}
 
 func (y Yaku_Honitsu) Name() string { return "Honitsu (Half Flush)" }
 func (y Yaku_Honitsu) Check(hand Hand, sets []Set, winCtx WinContext) (int, bool) {
-	var key int
+	var suitStart int = -1
+	// Find which suit we have tiles from
 	for i, count := range hand.counts {
 		if count > 0 && i < 27 {
-			key = i % 9
+			// Determine the start of this tile's suit
+			if i < 9 {
+				suitStart = 0 // Manzu
+			} else if i < 18 {
+				suitStart = 9 // Pinzu
+			} else {
+				suitStart = 18 // Souzu
+			}
 			break
 		}
 	}
-	if key == 0 && hand.counts[0] == 0 {
+	if suitStart == -1 {
+		// Only honors, not half flush
 		return 0, false
 	}
+	// Check that all numbered tiles are from the same suit
 	for i, count := range hand.counts {
-		if (i < key || i >= key+9) && i < 27 {
-			if count > 0 {
+		if count > 0 && i < 27 {
+			// Check if this tile is from a different suit
+			if i < suitStart || i >= suitStart+9 {
 				return 0, false
 			}
 		}
@@ -243,4 +261,124 @@ func (y Yaku_Suuankou) Check(hand Hand, sets []Set, winCtx WinContext) (int, boo
 		}
 	}
 	return 2, true
+}
+
+type Yaku_Iipeikou struct{}
+
+func (y Yaku_Iipeikou) Name() string { return "Iipeikou (One Set of Identical Sequences)" }
+func (y Yaku_Iipeikou) Check(hand Hand, sets []Set, winCtx WinContext) (int, bool) {
+	if !winCtx.Menzen {
+		return 0, false
+	}
+	match := false
+	for i, set := range sets {
+		if set.Type != Shuntsu {
+			return 0, false
+		}
+		for j, otherSet := range sets {
+			if i != j && set.Type == Shuntsu {
+				if set.Tiles[0].ID == otherSet.Tiles[0].ID && set.Tiles[1].ID == otherSet.Tiles[1].ID && set.Tiles[2].ID == otherSet.Tiles[2].ID {
+					match = true
+				}
+			}
+		}
+	}
+	if match {
+		return 1, true
+	}
+	return 0, false
+}
+
+type Yaku_Ryanpeikou struct{}
+
+func (y Yaku_Ryanpeikou) Name() string { return "Ryanpeikou (Two Sets of Identical Sequences)" }
+func (y Yaku_Ryanpeikou) Check(hand Hand, sets []Set, winCtx WinContext) (int, bool) {
+	if !winCtx.Menzen {
+		return 0, false
+	}
+	match := false
+	match2 := false
+	for i, set := range sets {
+		if set.Type != Shuntsu {
+			return 0, false
+		}
+		for j, otherSet := range sets {
+			if i != j && set.Type == Shuntsu {
+				if set.Tiles[0].ID == otherSet.Tiles[0].ID && set.Tiles[1].ID == otherSet.Tiles[1].ID && set.Tiles[2].ID == otherSet.Tiles[2].ID {
+					if !match {
+						match = true
+					} else {
+						match2 = true
+					}
+				}
+			}
+		}
+	}
+	if match && match2 {
+		return 3, true
+	}
+	return 0, false
+}
+
+type Yaku_Daisangen struct{}
+
+func (y Yaku_Daisangen) Name() string { return "Daisangen (Big Three Dragons)" }
+func (y Yaku_Daisangen) Check(hand Hand, sets []Set, winCtx WinContext) (int, bool) {
+	dragonTriplets := 0
+	for _, set := range sets {
+		if set.Type == Koutsu || set.Type == Kantsu {
+			if set.Tiles[0].ID >= 31 && set.Tiles[0].ID <= 33 {
+				dragonTriplets++
+			}
+		}
+	}
+	if dragonTriplets == 3 {
+		return 13, true
+	}
+	return 0, false
+}
+
+type Yaku_Shousangen struct{}
+
+func (y Yaku_Shousangen) Name() string { return "Shousangen (Little Three Dragons)" }
+func (y Yaku_Shousangen) Check(hand Hand, sets []Set, winCtx WinContext) (int, bool) {
+	dragonTriplets := 0
+	pairFound := false
+	for _, set := range sets {
+		if set.Type == Koutsu || set.Type == Kantsu {
+			if set.Tiles[0].ID >= 31 && set.Tiles[0].ID <= 33 {
+				dragonTriplets++
+			}
+		}
+	}
+	for i, count := range hand.counts {
+		if count == 2 && i >= 31 && i <= 33 {
+			pairFound = true
+			break
+		}
+	}
+	if dragonTriplets == 2 && pairFound {
+		return 2, true
+	}
+	return 0, false
+}
+
+type Yaku_KokushiMusou struct{}
+
+func (y Yaku_KokushiMusou) Name() string { return "Kokushi Musou (Thirteen Orphans)" }
+func (y Yaku_KokushiMusou) Check(hand Hand, sets []Set, winCtx WinContext) (int, bool) {
+	terminalsAndHonors := []int{0, 8, 9, 17, 18, 26, 27, 28, 29, 30, 31, 32, 33}
+	hasPair := false
+	for _, id := range terminalsAndHonors {
+		switch hand.counts[id] {
+		case 0:
+			return 0, false
+		case 2:
+			hasPair = true
+		}
+	}
+	if hasPair {
+		return 13, true
+	}
+	return 0, false
 }

@@ -1,5 +1,7 @@
 package main
 
+// Basic Tile, Hand, and Set Definitions
+
 type Suit int
 
 const (
@@ -51,7 +53,8 @@ func (t Tile) IsTerminalOrHonor() bool {
 	if t.Suit == Honor {
 		return true
 	}
-	if t.Rank == 0 || t.Rank == 8 || t.Rank == 9 || t.Rank == 17 || t.Rank == 18 || t.Rank == 26 {
+	// Rank is 0-8 for each suit, so terminals are rank 0 and rank 8
+	if t.Rank == 0 || t.Rank == 8 {
 		return true
 	}
 	return false
@@ -76,6 +79,7 @@ const (
 	Shuntsu SetType = iota // Sequence
 	Koutsu                 // Triplet
 	Kantsu                 // Quad
+	Proto                  // Used during parsing before type is determined
 )
 
 type Set struct {

@@ -2,16 +2,18 @@
 
 ## Short-Term Goals
 
-- Implement tests for all existing modules to ensure code reliability.
+- ~~Implement tests for all existing modules to ensure code reliability.~~ (Completed)
 - Add additional tests for edge cases to patch oversights.
+- Finalize the yaku detection module to cover all standard yaku.
 - Complete the scoring module to calculate hand scores based on detected yaku.
-- Develop a complete progresssion that utilizes all currently implemented features.
+- Develop a complete progression that utilizes all currently implemented features.
   - eg. input hand, detect validity, calculate yaku, score hand.
 
 ## Long-Term Goals
 
-- Determine the credibility of implementing a full game simulation. (No AI players)
-- Explore the possibility of implementing the Hierarchical Branch and Bound Algorithm for optimal hand solving. Can be then used for AI players in the future.
+- Explore and implement the Quadtree Algorithm for deficiency calculation.
+- Explore and implement the Block Deficiency Algorithm for improved hand analysis.
+- Explore and implement the Hierarchical Branch and Bound Algorithm for optimal tile selection.
+- Develop a solution that utilizes the above algorithms to create an CPU opponent.
 - Consider possible graphical implementations for user interaction. (eg. web app, desktop app)
-- Refactor codebase to improve modularity and maintainability. (general code cleanup)
 - Expand documentation to cover all modules and functions comprehensively.
