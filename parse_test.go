@@ -114,6 +114,33 @@ func TestValidateHand(t *testing.T) {
 			wantValid: false,
 			wantSets:  0,
 		},
+		{
+			name: "Valid hand with overlapping sequences",
+			hand: func() []int {
+				h := make([]int, 34)
+				h[0] = 1 // 1-man
+				h[1] = 1 // 2-man
+				h[2] = 2 // 3-man
+				h[3] = 1 // 4-man
+				h[4] = 1 // 5-man
+				return h
+			}(),
+			wantValid: true,
+			wantSets:  2,
+		},
+		{
+			name: "Invalid hand with five tiles that look like a sequence and a pair",
+			hand: func() []int {
+				h := make([]int, 34)
+				h[0] = 2 // 1-man
+				h[1] = 1 // 2-man
+				h[2] = 1 // 3-man
+				h[3] = 1 // 4-man
+				return h
+			}(),
+			wantValid: false,
+			wantSets:  0,
+		},
 	}
 
 	for _, tt := range tests {
