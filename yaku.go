@@ -41,6 +41,24 @@ var yakuListBonus = []Yaku{
 }
 
 func CheckAllYaku(hand Hand, sets []Set, winCtx WinContext) (int, []string) {
+	// Check for yakuman first
+	yakumanHan := 0
+	yakumanNames := []string{}
+	isYakuman := false
+
+	allYaku := append(yakuList, yakuListSpecial...)
+	for _, yaku := range allYaku {
+		if han, ok := yaku.Check(hand, sets, winCtx); ok && han >= 13 {
+			isYakuman = true
+			yakumanHan += han
+			yakumanNames = append(yakumanNames, yaku.Name())
+		}
+	}
+
+	if isYakuman {
+		return yakumanHan, yakumanNames
+	}
+
 	totalHan := 0
 	yakus := []string{}
 	// Check for bonus yaku

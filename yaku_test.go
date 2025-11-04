@@ -89,6 +89,23 @@ func TestCheckAllYaku(t *testing.T) {
 			wantMinHan:  4, // Riichi(1) + Tsumo(1) + Tanyao(1) + Pinfu(1)
 			wantYakuNum: 4,
 		},
+		{
+			name: "Yakuman Suuankou should be exclusive",
+			hand: Hand{},
+			sets: []Set{
+				{Type: Koutsu, Tiles: []Tile{ParseTile(1, false), ParseTile(1, false), ParseTile(1, false)}, Open: false},
+				{Type: Koutsu, Tiles: []Tile{ParseTile(2, false), ParseTile(2, false), ParseTile(2, false)}, Open: false},
+				{Type: Koutsu, Tiles: []Tile{ParseTile(3, false), ParseTile(3, false), ParseTile(3, false)}, Open: false},
+				{Type: Koutsu, Tiles: []Tile{ParseTile(4, false), ParseTile(4, false), ParseTile(4, false)}, Open: false},
+			},
+			winCtx: WinContext{
+				Menzen:      true,
+				Tsumo:       true,
+				WinningTile: ParseTile(0, false),
+			},
+			wantMinHan:  13,
+			wantYakuNum: 1,
+		},
 	}
 
 	for _, tt := range tests {
@@ -278,6 +295,17 @@ func TestYaku_Yakuhai(t *testing.T) {
 			wantHan: 1,
 			wantOk:  true,
 		},
+		{
+			name: "Quad of value tiles",
+			hand: func() Hand {
+				h := Hand{}
+				h.counts[31] = 4 // White dragon quad
+				return h
+			}(),
+			winCtx:  WinContext{Seat: 0, Round: 1},
+			wantHan: 1,
+			wantOk:  true,
+		},
 	}
 
 	// Special case: provide sets for the third test only
@@ -304,6 +332,7 @@ func TestYaku_Pinfu(t *testing.T) {
 
 	tests := []struct {
 		name    string
+		hand    Hand
 		sets    []Set
 		winCtx  WinContext
 		wantHan int
@@ -311,6 +340,7 @@ func TestYaku_Pinfu(t *testing.T) {
 	}{
 		{
 			name: "All sequences, proper wait",
+			hand: Hand{},
 			sets: []Set{
 				{Type: Shuntsu, Tiles: []Tile{ParseTile(1, false), ParseTile(2, false), ParseTile(3, false)}},
 			},
@@ -320,6 +350,7 @@ func TestYaku_Pinfu(t *testing.T) {
 		},
 		{
 			name: "Contains triplet",
+			hand: Hand{},
 			sets: []Set{
 				{Type: Koutsu, Tiles: []Tile{ParseTile(1, false), ParseTile(1, false), ParseTile(1, false)}},
 			},
@@ -329,6 +360,7 @@ func TestYaku_Pinfu(t *testing.T) {
 		},
 		{
 			name: "Not menzen",
+			hand: Hand{},
 			sets: []Set{
 				{Type: Shuntsu, Tiles: []Tile{ParseTile(1, false), ParseTile(2, false), ParseTile(3, false)}},
 			},
@@ -338,6 +370,7 @@ func TestYaku_Pinfu(t *testing.T) {
 		},
 		{
 			name: "Honor winning tile",
+			hand: Hand{},
 			sets: []Set{
 				{Type: Shuntsu, Tiles: []Tile{ParseTile(1, false), ParseTile(2, false), ParseTile(3, false)}},
 			},
@@ -347,6 +380,7 @@ func TestYaku_Pinfu(t *testing.T) {
 		},
 		{
 			name: "Edge wait should not be Pinfu (1-2-3 waiting on 3)",
+			hand: Hand{},
 			sets: []Set{
 				{Type: Shuntsu, Tiles: []Tile{ParseTile(0, false), ParseTile(1, false), ParseTile(2, false)}},
 			},
@@ -356,6 +390,7 @@ func TestYaku_Pinfu(t *testing.T) {
 		},
 		{
 			name: "Middle wait should not be Pinfu (2-3-4 waiting on 3)",
+			hand: Hand{},
 			sets: []Set{
 				{Type: Shuntsu, Tiles: []Tile{ParseTile(1, false), ParseTile(2, false), ParseTile(3, false)}},
 			},
@@ -363,11 +398,25 @@ func TestYaku_Pinfu(t *testing.T) {
 			wantHan: 0,
 			wantOk:  false,
 		},
+		{
+			name: "Pinfu with valued pair",
+			hand: func() Hand {
+				h := Hand{}
+				h.counts[27] = 2 // East wind pair
+				return h
+			}(),
+			sets: []Set{
+				{Type: Shuntsu, Tiles: []Tile{ParseTile(1, false), ParseTile(2, false), ParseTile(3, false)}},
+			},
+			winCtx:  WinContext{Menzen: true, WinningTile: ParseTile(1, false), Seat: 0},
+			wantHan: 0,
+			wantOk:  false,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotHan, gotOk := yaku.Check(Hand{}, tt.sets, tt.winCtx)
+			gotHan, gotOk := yaku.Check(tt.hand, tt.sets, tt.winCtx)
 			if gotHan != tt.wantHan {
 				t.Errorf("Yaku_Pinfu.Check() han = %v, want %v", gotHan, tt.wantHan)
 			}
