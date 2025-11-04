@@ -121,6 +121,1125 @@ func TestCheckAllYaku(t *testing.T) {
 	}
 }
 
+func TestYaku_Suukantsu(t *testing.T) {
+	yaku := Yaku_Suukantsu{}
+
+	tests := []struct {
+		name    string
+		sets    []Set
+		winCtx  WinContext
+		wantHan int
+		wantOk  bool
+	}{
+		{
+			name: "Four quads",
+			sets: []Set{
+				{Type: Kantsu, Tiles: []Tile{ParseTile(0, false), ParseTile(0, false), ParseTile(0, false), ParseTile(0, false)}},
+				{Type: Kantsu, Tiles: []Tile{ParseTile(9, false), ParseTile(9, false), ParseTile(9, false), ParseTile(9, false)}},
+				{Type: Kantsu, Tiles: []Tile{ParseTile(18, false), ParseTile(18, false), ParseTile(18, false), ParseTile(18, false)}},
+				{Type: Kantsu, Tiles: []Tile{ParseTile(27, false), ParseTile(27, false), ParseTile(27, false), ParseTile(27, false)}},
+			},
+			winCtx:  WinContext{},
+			wantHan: 13,
+			wantOk:  true,
+		},
+		{
+			name: "Three quads",
+			sets: []Set{
+				{Type: Kantsu, Tiles: []Tile{ParseTile(0, false), ParseTile(0, false), ParseTile(0, false), ParseTile(0, false)}},
+				{Type: Kantsu, Tiles: []Tile{ParseTile(9, false), ParseTile(9, false), ParseTile(9, false), ParseTile(9, false)}},
+				{Type: Kantsu, Tiles: []Tile{ParseTile(18, false), ParseTile(18, false), ParseTile(18, false), ParseTile(18, false)}},
+			},
+			winCtx:  WinContext{},
+			wantHan: 0,
+			wantOk:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotHan, gotOk := yaku.Check(Hand{}, tt.sets, tt.winCtx)
+			if gotHan != tt.wantHan {
+				t.Errorf("Yaku_Suukantsu.Check() han = %v, want %v", gotHan, tt.wantHan)
+			}
+			if gotOk != tt.wantOk {
+				t.Errorf("Yaku_Suukantsu.Check() ok = %v, want %v", gotOk, tt.wantOk)
+			}
+		})
+	}
+}
+
+func TestYaku_ChuurenPoutou(t *testing.T) {
+	yaku := Yaku_ChuurenPoutou{}
+
+	tests := []struct {
+		name    string
+		hand    Hand
+		winCtx  WinContext
+		wantHan int
+		wantOk  bool
+	}{
+		{
+			name: "Nine gates",
+			hand: func() Hand {
+				h := Hand{}
+				needed := []int{3, 1, 1, 1, 1, 1, 1, 1, 3}
+				for i := 0; i < 9; i++ {
+					h.counts[i] = needed[i]
+				}
+				h.counts[4]++
+				return h
+			}(),
+			winCtx:  WinContext{Menzen: true},
+			wantHan: 13,
+			wantOk:  true,
+		},
+		{
+			name: "Not nine gates",
+			hand: func() Hand {
+				h := Hand{}
+				needed := []int{3, 1, 1, 1, 1, 1, 1, 1, 2}
+				for i := 0; i < 9; i++ {
+					h.counts[i] = needed[i]
+				}
+				h.counts[4]++
+				return h
+			}(),
+			winCtx:  WinContext{Menzen: true},
+			wantHan: 0,
+			wantOk:  false,
+		},
+		{
+			name: "Nine gates but open",
+			hand: func() Hand {
+				h := Hand{}
+				needed := []int{3, 1, 1, 1, 1, 1, 1, 1, 3}
+				for i := 0; i < 9; i++ {
+					h.counts[i] = needed[i]
+				}
+				h.counts[4]++
+				return h
+			}(),
+			winCtx:  WinContext{Menzen: false},
+			wantHan: 0,
+			wantOk:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotHan, gotOk := yaku.Check(tt.hand, []Set{}, tt.winCtx)
+			if gotHan != tt.wantHan {
+				t.Errorf("Yaku_ChuurenPoutou.Check() han = %v, want %v", gotHan, tt.wantHan)
+			}
+			if gotOk != tt.wantOk {
+				t.Errorf("Yaku_ChuurenPoutou.Check() ok = %v, want %v", gotOk, tt.wantOk)
+			}
+		})
+	}
+}
+
+func TestYaku_Ryuuiisou(t *testing.T) {
+	yaku := Yaku_Ryuuiisou{}
+
+	tests := []struct {
+		name    string
+		hand    Hand
+		wantHan int
+		wantOk  bool
+	}{
+		{
+			name: "All green",
+			hand: func() Hand {
+				h := Hand{}
+				h.counts[19] = 3
+				h.counts[20] = 3
+				h.counts[21] = 3
+				h.counts[23] = 3
+				h.counts[25] = 2
+				return h
+			}(),
+			wantHan: 13,
+			wantOk:  true,
+		},
+		{
+			name: "Not all green",
+			hand: func() Hand {
+				h := Hand{}
+				h.counts[19] = 3
+				h.counts[20] = 3
+				h.counts[22] = 3
+				return h
+			}(),
+			wantHan: 0,
+			wantOk:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotHan, gotOk := yaku.Check(tt.hand, []Set{}, WinContext{})
+			if gotHan != tt.wantHan {
+				t.Errorf("Yaku_Ryuuiisou.Check() han = %v, want %v", gotHan, tt.wantHan)
+			}
+			if gotOk != tt.wantOk {
+				t.Errorf("Yaku_Ryuuiisou.Check() ok = %v, want %v", gotOk, tt.wantOk)
+			}
+		})
+	}
+}
+
+func TestYaku_Chinroutou(t *testing.T) {
+	yaku := Yaku_Chinroutou{}
+
+	tests := []struct {
+		name    string
+		hand    Hand
+		wantHan int
+		wantOk  bool
+	}{
+		{
+			name: "All terminals",
+			hand: func() Hand {
+				h := Hand{}
+				h.counts[0] = 3
+				h.counts[8] = 3
+				h.counts[9] = 3
+				h.counts[17] = 3
+				h.counts[18] = 2
+				return h
+			}(),
+			wantHan: 13,
+			wantOk:  true,
+		},
+		{
+			name: "Contains honor",
+			hand: func() Hand {
+				h := Hand{}
+				h.counts[0] = 3
+				h.counts[8] = 3
+				h.counts[27] = 3
+				return h
+			}(),
+			wantHan: 0,
+			wantOk:  false,
+		},
+		{
+			name: "Contains simple",
+			hand: func() Hand {
+				h := Hand{}
+				h.counts[0] = 3
+				h.counts[1] = 3
+				return h
+			}(),
+			wantHan: 0,
+			wantOk:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotHan, gotOk := yaku.Check(tt.hand, []Set{}, WinContext{})
+			if gotHan != tt.wantHan {
+				t.Errorf("Yaku_Chinroutou.Check() han = %v, want %v", gotHan, tt.wantHan)
+			}
+			if gotOk != tt.wantOk {
+				t.Errorf("Yaku_Chinroutou.Check() ok = %v, want %v", gotOk, tt.wantOk)
+			}
+		})
+	}
+}
+
+func TestYaku_Tsuuiisou(t *testing.T) {
+	yaku := Yaku_Tsuuiisou{}
+
+	tests := []struct {
+		name    string
+		hand    Hand
+		wantHan int
+		wantOk  bool
+	}{
+		{
+			name: "All honors",
+			hand: func() Hand {
+				h := Hand{}
+				h.counts[27] = 3
+				h.counts[28] = 3
+				h.counts[29] = 3
+				h.counts[30] = 3
+				h.counts[31] = 2
+				return h
+			}(),
+			wantHan: 13,
+			wantOk:  true,
+		},
+		{
+			name: "Not all honors",
+			hand: func() Hand {
+				h := Hand{}
+				h.counts[0] = 1
+				h.counts[27] = 3
+				h.counts[28] = 3
+				h.counts[29] = 3
+				h.counts[30] = 2
+				return h
+			}(),
+			wantHan: 0,
+			wantOk:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotHan, gotOk := yaku.Check(tt.hand, []Set{}, WinContext{})
+			if gotHan != tt.wantHan {
+				t.Errorf("Yaku_Tsuuiisou.Check() han = %v, want %v", gotHan, tt.wantHan)
+			}
+			if gotOk != tt.wantOk {
+				t.Errorf("Yaku_Tsuuiisou.Check() ok = %v, want %v", gotOk, tt.wantOk)
+			}
+		})
+	}
+}
+
+func TestYaku_Daisuushii(t *testing.T) {
+	yaku := Yaku_Daisuushii{}
+
+	tests := []struct {
+		name    string
+		hand    Hand
+		wantHan int
+		wantOk  bool
+	}{
+		{
+			name: "Big four winds",
+			hand: func() Hand {
+				h := Hand{}
+				h.counts[27] = 3
+				h.counts[28] = 3
+				h.counts[29] = 3
+				h.counts[30] = 3
+				return h
+			}(),
+			wantHan: 13,
+			wantOk:  true,
+		},
+		{
+			name: "Not big four winds",
+			hand: func() Hand {
+				h := Hand{}
+				h.counts[27] = 3
+				h.counts[28] = 3
+				h.counts[29] = 3
+				return h
+			}(),
+			wantHan: 0,
+			wantOk:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotHan, gotOk := yaku.Check(tt.hand, []Set{}, WinContext{})
+			if gotHan != tt.wantHan {
+				t.Errorf("Yaku_Daisuushii.Check() han = %v, want %v", gotHan, tt.wantHan)
+			}
+			if gotOk != tt.wantOk {
+				t.Errorf("Yaku_Daisuushii.Check() ok = %v, want %v", gotOk, tt.wantOk)
+			}
+		})
+	}
+}
+
+func TestYaku_Shousuushii(t *testing.T) {
+	yaku := Yaku_Shousuushii{}
+
+	tests := []struct {
+		name    string
+		hand    Hand
+		wantHan int
+		wantOk  bool
+	}{
+		{
+			name: "Little four winds",
+			hand: func() Hand {
+				h := Hand{}
+				h.counts[27] = 3
+				h.counts[28] = 3
+				h.counts[29] = 3
+				h.counts[30] = 2
+				return h
+			}(),
+			wantHan: 13,
+			wantOk:  true,
+		},
+		{
+			name: "Not little four winds",
+			hand: func() Hand {
+				h := Hand{}
+				h.counts[27] = 3
+				h.counts[28] = 3
+				h.counts[29] = 2
+				h.counts[30] = 2
+				return h
+			}(),
+			wantHan: 0,
+			wantOk:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotHan, gotOk := yaku.Check(tt.hand, []Set{}, WinContext{})
+			if gotHan != tt.wantHan {
+				t.Errorf("Yaku_Shousuushii.Check() han = %v, want %v", gotHan, tt.wantHan)
+			}
+			if gotOk != tt.wantOk {
+				t.Errorf("Yaku_Shousuushii.Check() ok = %v, want %v", gotOk, tt.wantOk)
+			}
+		})
+	}
+}
+
+func TestYaku_Daisangen(t *testing.T) {
+	yaku := Yaku_Daisangen{}
+
+	tests := []struct {
+		name    string
+		hand    Hand
+		wantHan int
+		wantOk  bool
+	}{
+		{
+			name: "Big three dragons",
+			hand: func() Hand {
+				h := Hand{}
+				h.counts[31] = 3
+				h.counts[32] = 3
+				h.counts[33] = 3
+				return h
+			}(),
+			wantHan: 13,
+			wantOk:  true,
+		},
+		{
+			name: "Not big three dragons",
+			hand: func() Hand {
+				h := Hand{}
+				h.counts[31] = 3
+				h.counts[32] = 3
+				return h
+			}(),
+			wantHan: 0,
+			wantOk:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotHan, gotOk := yaku.Check(tt.hand, []Set{}, WinContext{})
+			if gotHan != tt.wantHan {
+				t.Errorf("Yaku_Daisangen.Check() han = %v, want %v", gotHan, tt.wantHan)
+			}
+			if gotOk != tt.wantOk {
+				t.Errorf("Yaku_Daisangen.Check() ok = %v, want %v", gotOk, tt.wantOk)
+			}
+		})
+	}
+}
+
+func TestYaku_KokushiMusou(t *testing.T) {
+	yaku := Yaku_KokushiMusou{}
+
+	tests := []struct {
+		name    string
+		hand    Hand
+		wantHan int
+		wantOk  bool
+	}{
+		{
+			name: "Thirteen orphans",
+			hand: func() Hand {
+				h := Hand{}
+				terminalsAndHonors := []int{0, 8, 9, 17, 18, 26, 27, 28, 29, 30, 31, 32, 33}
+				for _, id := range terminalsAndHonors {
+					h.counts[id] = 1
+				}
+				h.counts[0] = 2
+				return h
+			}(),
+			wantHan: 13,
+			wantOk:  true,
+		},
+		{
+			name: "Not thirteen orphans",
+			hand: func() Hand {
+				h := Hand{}
+				terminalsAndHonors := []int{0, 8, 9, 17, 18, 26, 27, 28, 29, 30, 31, 32}
+				for _, id := range terminalsAndHonors {
+					h.counts[id] = 1
+				}
+				h.counts[0] = 2
+				return h
+			}(),
+			wantHan: 0,
+			wantOk:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotHan, gotOk := yaku.Check(tt.hand, []Set{}, WinContext{})
+			if gotHan != tt.wantHan {
+				t.Errorf("Yaku_KokushiMusou.Check() han = %v, want %v", gotHan, tt.wantHan)
+			}
+			if gotOk != tt.wantOk {
+				t.Errorf("Yaku_KokushiMusou.Check() ok = %v, want %v", gotOk, tt.wantOk)
+			}
+		})
+	}
+}
+
+func TestYaku_Shousangen(t *testing.T) {
+	yaku := Yaku_Shousangen{}
+
+	tests := []struct {
+		name    string
+		hand    Hand
+		wantHan int
+		wantOk  bool
+	}{
+		{
+			name: "Little three dragons",
+			hand: func() Hand {
+				h := Hand{}
+				h.counts[31] = 3
+				h.counts[32] = 3
+				h.counts[33] = 2
+				return h
+			}(),
+			wantHan: 2,
+			wantOk:  true,
+		},
+		{
+			name: "Not little three dragons",
+			hand: func() Hand {
+				h := Hand{}
+				h.counts[31] = 3
+				h.counts[32] = 2
+				h.counts[33] = 2
+				return h
+			}(),
+			wantHan: 0,
+			wantOk:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotHan, gotOk := yaku.Check(tt.hand, []Set{}, WinContext{})
+			if gotHan != tt.wantHan {
+				t.Errorf("Yaku_Shousangen.Check() han = %v, want %v", gotHan, tt.wantHan)
+			}
+			if gotOk != tt.wantOk {
+				t.Errorf("Yaku_Shousangen.Check() ok = %v, want %v", gotOk, tt.wantOk)
+			}
+		})
+	}
+}
+
+func TestYaku_Honroutou(t *testing.T) {
+	yaku := Yaku_Honroutou{}
+
+	tests := []struct {
+		name    string
+		hand    Hand
+		wantHan int
+		wantOk  bool
+	}{
+		{
+			name: "All terminals and honors",
+			hand: func() Hand {
+				h := Hand{}
+				h.counts[0] = 3
+				h.counts[8] = 3
+				h.counts[27] = 3
+				h.counts[31] = 2
+				return h
+			}(),
+			wantHan: 2,
+			wantOk:  true,
+		},
+		{
+			name: "Contains simple",
+			hand: func() Hand {
+				h := Hand{}
+				h.counts[0] = 3
+				h.counts[1] = 3
+				return h
+			}(),
+			wantHan: 0,
+			wantOk:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotHan, gotOk := yaku.Check(tt.hand, []Set{}, WinContext{})
+			if gotHan != tt.wantHan {
+				t.Errorf("Yaku_Honroutou.Check() han = %v, want %v", gotHan, tt.wantHan)
+			}
+			if gotOk != tt.wantOk {
+				t.Errorf("Yaku_Honroutou.Check() ok = %v, want %v", gotOk, tt.wantOk)
+			}
+		})
+	}
+}
+
+func TestYaku_Junchan(t *testing.T) {
+	yaku := Yaku_Junchan{}
+
+	tests := []struct {
+		name    string
+		hand    Hand
+		sets    []Set
+		winCtx  WinContext
+		wantHan int
+		wantOk  bool
+	}{
+		{
+			name: "Junchan with sequences and triplets, closed",
+			hand: func() Hand {
+				h := Hand{}
+				h.counts[0] = 2
+				return h
+			}(),
+			sets: []Set{
+				{Type: Shuntsu, Tiles: []Tile{ParseTile(0, false), ParseTile(1, false), ParseTile(2, false)}},
+				{Type: Koutsu, Tiles: []Tile{ParseTile(8, false), ParseTile(8, false), ParseTile(8, false)}},
+			},
+			winCtx:  WinContext{Menzen: true},
+			wantHan: 3,
+			wantOk:  true,
+		},
+		{
+			name: "Junchan with sequences and triplets, open",
+			hand: func() Hand {
+				h := Hand{}
+				h.counts[0] = 2
+				return h
+			}(),
+			sets: []Set{
+				{Type: Shuntsu, Tiles: []Tile{ParseTile(0, false), ParseTile(1, false), ParseTile(2, false)}},
+				{Type: Koutsu, Tiles: []Tile{ParseTile(8, false), ParseTile(8, false), ParseTile(8, false)}},
+			},
+			winCtx:  WinContext{Menzen: false},
+			wantHan: 2,
+			wantOk:  true,
+		},
+		{
+			name: "Not junchan, contains honor",
+			hand: func() Hand {
+				h := Hand{}
+				h.counts[27] = 2
+				return h
+			}(),
+			sets: []Set{
+				{Type: Shuntsu, Tiles: []Tile{ParseTile(0, false), ParseTile(1, false), ParseTile(2, false)}},
+			},
+			winCtx:  WinContext{Menzen: true},
+			wantHan: 0,
+			wantOk:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotHan, gotOk := yaku.Check(tt.hand, tt.sets, tt.winCtx)
+			if gotHan != tt.wantHan {
+				t.Errorf("Yaku_Junchan.Check() han = %v, want %v", gotHan, tt.wantHan)
+			}
+			if gotOk != tt.wantOk {
+				t.Errorf("Yaku_Junchan.Check() ok = %v, want %v", gotOk, tt.wantOk)
+			}
+		})
+	}
+}
+
+func TestYaku_Chanta(t *testing.T) {
+	yaku := Yaku_Chanta{}
+
+	tests := []struct {
+		name    string
+		hand    Hand
+		sets    []Set
+		winCtx  WinContext
+		wantHan int
+		wantOk  bool
+	}{
+		{
+			name: "Chanta with sequences and triplets, closed",
+			hand: func() Hand {
+				h := Hand{}
+				h.counts[27] = 2
+				return h
+			}(),
+			sets: []Set{
+				{Type: Shuntsu, Tiles: []Tile{ParseTile(0, false), ParseTile(1, false), ParseTile(2, false)}},
+				{Type: Koutsu, Tiles: []Tile{ParseTile(8, false), ParseTile(8, false), ParseTile(8, false)}},
+			},
+			winCtx:  WinContext{Menzen: true},
+			wantHan: 2,
+			wantOk:  true,
+		},
+		{
+			name: "Chanta with sequences and triplets, open",
+			hand: func() Hand {
+				h := Hand{}
+				h.counts[27] = 2
+				return h
+			}(),
+			sets: []Set{
+				{Type: Shuntsu, Tiles: []Tile{ParseTile(0, false), ParseTile(1, false), ParseTile(2, false)}},
+				{Type: Koutsu, Tiles: []Tile{ParseTile(8, false), ParseTile(8, false), ParseTile(8, false)}},
+			},
+			winCtx:  WinContext{Menzen: false},
+			wantHan: 1,
+			wantOk:  true,
+		},
+		{
+			name: "Not chanta, contains simple",
+			hand: func() Hand {
+				h := Hand{}
+				h.counts[2] = 2
+				return h
+			}(),
+			sets: []Set{
+				{Type: Shuntsu, Tiles: []Tile{ParseTile(2, false), ParseTile(3, false), ParseTile(4, false)}},
+			},
+			winCtx:  WinContext{Menzen: true},
+			wantHan: 0,
+			wantOk:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotHan, gotOk := yaku.Check(tt.hand, tt.sets, tt.winCtx)
+			if gotHan != tt.wantHan {
+				t.Errorf("Yaku_Chanta.Check() han = %v, want %v", gotHan, tt.wantHan)
+			}
+			if gotOk != tt.wantOk {
+				t.Errorf("Yaku_Chanta.Check() ok = %v, want %v", gotOk, tt.wantOk)
+			}
+		})
+	}
+}
+
+func TestYaku_Sankantsu(t *testing.T) {
+	yaku := Yaku_Sankantsu{}
+
+	tests := []struct {
+		name    string
+		sets    []Set
+		winCtx  WinContext
+		wantHan int
+		wantOk  bool
+	}{
+		{
+			name: "Three quads",
+			sets: []Set{
+				{Type: Kantsu, Tiles: []Tile{ParseTile(0, false), ParseTile(0, false), ParseTile(0, false), ParseTile(0, false)}},
+				{Type: Kantsu, Tiles: []Tile{ParseTile(9, false), ParseTile(9, false), ParseTile(9, false), ParseTile(9, false)}},
+				{Type: Kantsu, Tiles: []Tile{ParseTile(18, false), ParseTile(18, false), ParseTile(18, false), ParseTile(18, false)}},
+			},
+			winCtx:  WinContext{},
+			wantHan: 2,
+			wantOk:  true,
+		},
+		{
+			name: "Two quads",
+			sets: []Set{
+				{Type: Kantsu, Tiles: []Tile{ParseTile(0, false), ParseTile(0, false), ParseTile(0, false), ParseTile(0, false)}},
+				{Type: Kantsu, Tiles: []Tile{ParseTile(9, false), ParseTile(9, false), ParseTile(9, false), ParseTile(9, false)}},
+			},
+			winCtx:  WinContext{},
+			wantHan: 0,
+			wantOk:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotHan, gotOk := yaku.Check(Hand{}, tt.sets, tt.winCtx)
+			if gotHan != tt.wantHan {
+				t.Errorf("Yaku_Sankantsu.Check() han = %v, want %v", gotHan, tt.wantHan)
+			}
+			if gotOk != tt.wantOk {
+				t.Errorf("Yaku_Sankantsu.Check() ok = %v, want %v", gotOk, tt.wantOk)
+			}
+		})
+	}
+}
+
+func TestYaku_SanshokuDoukou(t *testing.T) {
+	yaku := Yaku_SanshokuDoukou{}
+
+	tests := []struct {
+		name    string
+		sets    []Set
+		winCtx  WinContext
+		wantHan int
+		wantOk  bool
+	}{
+		{
+			name: "Three color triplets",
+			sets: []Set{
+				{Type: Koutsu, Tiles: []Tile{ParseTile(0, false), ParseTile(0, false), ParseTile(0, false)}},
+				{Type: Koutsu, Tiles: []Tile{ParseTile(9, false), ParseTile(9, false), ParseTile(9, false)}},
+				{Type: Koutsu, Tiles: []Tile{ParseTile(18, false), ParseTile(18, false), ParseTile(18, false)}},
+			},
+			winCtx:  WinContext{},
+			wantHan: 2,
+			wantOk:  true,
+		},
+		{
+			name: "Not three color triplets",
+			sets: []Set{
+				{Type: Koutsu, Tiles: []Tile{ParseTile(0, false), ParseTile(0, false), ParseTile(0, false)}},
+				{Type: Koutsu, Tiles: []Tile{ParseTile(9, false), ParseTile(9, false), ParseTile(9, false)}},
+			},
+			winCtx:  WinContext{},
+			wantHan: 0,
+			wantOk:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotHan, gotOk := yaku.Check(Hand{}, tt.sets, tt.winCtx)
+			if gotHan != tt.wantHan {
+				t.Errorf("Yaku_SanshokuDoukou.Check() han = %v, want %v", gotHan, tt.wantHan)
+			}
+			if gotOk != tt.wantOk {
+				t.Errorf("Yaku_SanshokuDoukou.Check() ok = %v, want %v", gotOk, tt.wantOk)
+			}
+		})
+	}
+}
+
+func TestYaku_Sanankou(t *testing.T) {
+	yaku := Yaku_Sanankou{}
+
+	tests := []struct {
+		name    string
+		sets    []Set
+		winCtx  WinContext
+		wantHan int
+		wantOk  bool
+	}{
+		{
+			name: "Three concealed triplets",
+			sets: []Set{
+				{Type: Koutsu, Tiles: []Tile{ParseTile(0, false), ParseTile(0, false), ParseTile(0, false)}, Open: false},
+				{Type: Koutsu, Tiles: []Tile{ParseTile(3, false), ParseTile(3, false), ParseTile(3, false)}, Open: false},
+				{Type: Koutsu, Tiles: []Tile{ParseTile(6, false), ParseTile(6, false), ParseTile(6, false)}, Open: false},
+			},
+			winCtx:  WinContext{},
+			wantHan: 2,
+			wantOk:  true,
+		},
+		{
+			name: "Two concealed triplets",
+			sets: []Set{
+				{Type: Koutsu, Tiles: []Tile{ParseTile(0, false), ParseTile(1, false), ParseTile(2, false)}, Open: false},
+				{Type: Koutsu, Tiles: []Tile{ParseTile(3, false), ParseTile(4, false), ParseTile(5, false)}, Open: false},
+			},
+			winCtx:  WinContext{},
+			wantHan: 0,
+			wantOk:  false,
+		},
+		{
+			name: "Three triplets but one is open",
+			sets: []Set{
+				{Type: Koutsu, Tiles: []Tile{ParseTile(0, false), ParseTile(1, false), ParseTile(2, false)}, Open: false},
+				{Type: Koutsu, Tiles: []Tile{ParseTile(3, false), ParseTile(4, false), ParseTile(5, false)}, Open: false},
+				{Type: Koutsu, Tiles: []Tile{ParseTile(6, false), ParseTile(7, false), ParseTile(8, false)}, Open: true},
+			},
+			winCtx:  WinContext{},
+			wantHan: 0,
+			wantOk:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotHan, gotOk := yaku.Check(Hand{}, tt.sets, tt.winCtx)
+			if gotHan != tt.wantHan {
+				t.Errorf("Yaku_Sanankou.Check() han = %v, want %v", gotHan, tt.wantHan)
+			}
+			if gotOk != tt.wantOk {
+				t.Errorf("Yaku_Sanankou.Check() ok = %v, want %v", gotOk, tt.wantOk)
+			}
+		})
+	}
+}
+
+func TestYaku_Ryanpeikou(t *testing.T) {
+	yaku := Yaku_Ryanpeikou{}
+
+	tests := []struct {
+		name    string
+		sets    []Set
+		winCtx  WinContext
+		wantHan int
+		wantOk  bool
+	}{
+		{
+			name: "Two pairs of identical sequences",
+			sets: []Set{
+				{Type: Shuntsu, Tiles: []Tile{ParseTile(0, false), ParseTile(1, false), ParseTile(2, false)}},
+				{Type: Shuntsu, Tiles: []Tile{ParseTile(0, false), ParseTile(1, false), ParseTile(2, false)}},
+				{Type: Shuntsu, Tiles: []Tile{ParseTile(9, false), ParseTile(10, false), ParseTile(11, false)}},
+				{Type: Shuntsu, Tiles: []Tile{ParseTile(9, false), ParseTile(10, false), ParseTile(11, false)}},
+			},
+			winCtx:  WinContext{Menzen: true},
+			wantHan: 3,
+			wantOk:  true,
+		},
+		{
+			name: "One pair of identical sequences",
+			sets: []Set{
+				{Type: Shuntsu, Tiles: []Tile{ParseTile(0, false), ParseTile(1, false), ParseTile(2, false)}},
+				{Type: Shuntsu, Tiles: []Tile{ParseTile(0, false), ParseTile(1, false), ParseTile(2, false)}},
+			},
+			winCtx:  WinContext{Menzen: true},
+			wantHan: 0,
+			wantOk:  false,
+		},
+		{
+			name: "Two pairs of identical sequences but open hand",
+			sets: []Set{
+				{Type: Shuntsu, Tiles: []Tile{ParseTile(0, false), ParseTile(1, false), ParseTile(2, false)}},
+				{Type: Shuntsu, Tiles: []Tile{ParseTile(0, false), ParseTile(1, false), ParseTile(2, false)}},
+				{Type: Shuntsu, Tiles: []Tile{ParseTile(9, false), ParseTile(10, false), ParseTile(11, false)}},
+				{Type: Shuntsu, Tiles: []Tile{ParseTile(9, false), ParseTile(10, false), ParseTile(11, false)}},
+			},
+			winCtx:  WinContext{Menzen: false},
+			wantHan: 0,
+			wantOk:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotHan, gotOk := yaku.Check(Hand{}, tt.sets, tt.winCtx)
+			if gotHan != tt.wantHan {
+				t.Errorf("Yaku_Ryanpeikou.Check() han = %v, want %v", gotHan, tt.wantHan)
+			}
+			if gotOk != tt.wantOk {
+				t.Errorf("Yaku_Ryanpeikou.Check() ok = %v, want %v", gotOk, tt.wantOk)
+			}
+		})
+	}
+}
+
+func TestYaku_Ittsuu(t *testing.T) {
+	yaku := Yaku_Ittsuu{}
+
+	tests := []struct {
+		name    string
+		sets    []Set
+		winCtx  WinContext
+		wantHan int
+		wantOk  bool
+	}{
+		{
+			name: "Full straight, closed hand",
+			sets: []Set{
+				{Type: Shuntsu, Tiles: []Tile{ParseTile(0, false), ParseTile(1, false), ParseTile(2, false)}},
+				{Type: Shuntsu, Tiles: []Tile{ParseTile(3, false), ParseTile(4, false), ParseTile(5, false)}},
+				{Type: Shuntsu, Tiles: []Tile{ParseTile(6, false), ParseTile(7, false), ParseTile(8, false)}},
+			},
+			winCtx:  WinContext{Menzen: true},
+			wantHan: 2,
+			wantOk:  true,
+		},
+		{
+			name: "Full straight, open hand",
+			sets: []Set{
+				{Type: Shuntsu, Tiles: []Tile{ParseTile(0, false), ParseTile(1, false), ParseTile(2, false)}},
+				{Type: Shuntsu, Tiles: []Tile{ParseTile(3, false), ParseTile(4, false), ParseTile(5, false)}},
+				{Type: Shuntsu, Tiles: []Tile{ParseTile(6, false), ParseTile(7, false), ParseTile(8, false)}},
+			},
+			winCtx:  WinContext{Menzen: false},
+			wantHan: 1,
+			wantOk:  true,
+		},
+		{
+			name: "Not a full straight",
+			sets: []Set{
+				{Type: Shuntsu, Tiles: []Tile{ParseTile(0, false), ParseTile(1, false), ParseTile(2, false)}},
+				{Type: Shuntsu, Tiles: []Tile{ParseTile(3, false), ParseTile(4, false), ParseTile(5, false)}},
+			},
+			winCtx:  WinContext{Menzen: true},
+			wantHan: 0,
+			wantOk:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotHan, gotOk := yaku.Check(Hand{}, tt.sets, tt.winCtx)
+			if gotHan != tt.wantHan {
+				t.Errorf("Yaku_Ittsuu.Check() han = %v, want %v", gotHan, tt.wantHan)
+			}
+			if gotOk != tt.wantOk {
+				t.Errorf("Yaku_Ittsuu.Check() ok = %v, want %v", gotOk, tt.wantOk)
+			}
+		})
+	}
+}
+
+func TestYaku_SanshokuDoujun(t *testing.T) {
+	yaku := Yaku_SanshokuDoujun{}
+
+	tests := []struct {
+		name    string
+		sets    []Set
+		winCtx  WinContext
+		wantHan int
+		wantOk  bool
+	}{
+		{
+			name: "Three color straight, closed hand",
+			sets: []Set{
+				{Type: Shuntsu, Tiles: []Tile{ParseTile(0, false), ParseTile(1, false), ParseTile(2, false)}},
+				{Type: Shuntsu, Tiles: []Tile{ParseTile(9, false), ParseTile(10, false), ParseTile(11, false)}},
+				{Type: Shuntsu, Tiles: []Tile{ParseTile(18, false), ParseTile(19, false), ParseTile(20, false)}},
+			},
+			winCtx:  WinContext{Menzen: true},
+			wantHan: 2,
+			wantOk:  true,
+		},
+		{
+			name: "Three color straight, open hand",
+			sets: []Set{
+				{Type: Shuntsu, Tiles: []Tile{ParseTile(0, false), ParseTile(1, false), ParseTile(2, false)}},
+				{Type: Shuntsu, Tiles: []Tile{ParseTile(9, false), ParseTile(10, false), ParseTile(11, false)}},
+				{Type: Shuntsu, Tiles: []Tile{ParseTile(18, false), ParseTile(19, false), ParseTile(20, false)}},
+			},
+			winCtx:  WinContext{Menzen: false},
+			wantHan: 1,
+			wantOk:  true,
+		},
+		{
+			name: "Not a three color straight",
+			sets: []Set{
+				{Type: Shuntsu, Tiles: []Tile{ParseTile(0, false), ParseTile(1, false), ParseTile(2, false)}},
+				{Type: Shuntsu, Tiles: []Tile{ParseTile(9, false), ParseTile(10, false), ParseTile(11, false)}},
+			},
+			winCtx:  WinContext{Menzen: true},
+			wantHan: 0,
+			wantOk:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotHan, gotOk := yaku.Check(Hand{}, tt.sets, tt.winCtx)
+			if gotHan != tt.wantHan {
+				t.Errorf("Yaku_SanshokuDoujun.Check() han = %v, want %v", gotHan, tt.wantHan)
+			}
+			if gotOk != tt.wantOk {
+				t.Errorf("Yaku_SanshokuDoujun.Check() ok = %v, want %v", gotOk, tt.wantOk)
+			}
+		})
+	}
+}
+
+func TestYaku_Iipeikou(t *testing.T) {
+	yaku := Yaku_Iipeikou{}
+
+	tests := []struct {
+		name    string
+		sets    []Set
+		winCtx  WinContext
+		wantHan int
+		wantOk  bool
+	}{
+		{
+			name: "One pair of identical sequences",
+			sets: []Set{
+				{Type: Shuntsu, Tiles: []Tile{ParseTile(0, false), ParseTile(1, false), ParseTile(2, false)}},
+				{Type: Shuntsu, Tiles: []Tile{ParseTile(0, false), ParseTile(1, false), ParseTile(2, false)}},
+				{Type: Shuntsu, Tiles: []Tile{ParseTile(9, false), ParseTile(10, false), ParseTile(11, false)}},
+			},
+			winCtx:  WinContext{Menzen: true},
+			wantHan: 1,
+			wantOk:  true,
+		},
+		{
+			name: "No identical sequences",
+			sets: []Set{
+				{Type: Shuntsu, Tiles: []Tile{ParseTile(0, false), ParseTile(1, false), ParseTile(2, false)}},
+				{Type: Shuntsu, Tiles: []Tile{ParseTile(3, false), ParseTile(4, false), ParseTile(5, false)}},
+			},
+			winCtx:  WinContext{Menzen: true},
+			wantHan: 0,
+			wantOk:  false,
+		},
+		{
+			name: "Identical sequences but open hand",
+			sets: []Set{
+				{Type: Shuntsu, Tiles: []Tile{ParseTile(0, false), ParseTile(1, false), ParseTile(2, false)}},
+				{Type: Shuntsu, Tiles: []Tile{ParseTile(0, false), ParseTile(1, false), ParseTile(2, false)}},
+			},
+			winCtx:  WinContext{Menzen: false},
+			wantHan: 0,
+			wantOk:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotHan, gotOk := yaku.Check(Hand{}, tt.sets, tt.winCtx)
+			if gotHan != tt.wantHan {
+				t.Errorf("Yaku_Iipeikou.Check() han = %v, want %v", gotHan, tt.wantHan)
+			}
+			if gotOk != tt.wantOk {
+				t.Errorf("Yaku_Iipeikou.Check() ok = %v, want %v", gotOk, tt.wantOk)
+			}
+		})
+	}
+}
+
+func TestYaku_Ippatsu(t *testing.T) {
+	yaku := Yaku_Ippatsu{}
+
+	tests := []struct {
+		name    string
+		winCtx  WinContext
+		wantHan int
+		wantOk  bool
+	}{
+		{"Ippatsu", WinContext{Ippatsu: true}, 1, true},
+		{"No Ippatsu", WinContext{Ippatsu: false}, 0, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotHan, gotOk := yaku.Check(Hand{}, []Set{}, tt.winCtx)
+			if gotHan != tt.wantHan {
+				t.Errorf("Yaku_Ippatsu.Check() han = %v, want %v", gotHan, tt.wantHan)
+			}
+			if gotOk != tt.wantOk {
+				t.Errorf("Yaku_Ippatsu.Check() ok = %v, want %v", gotOk, tt.wantOk)
+			}
+		})
+	}
+}
+
 func TestYaku_Riichi(t *testing.T) {
 	yaku := Yaku_Riichi{}
 
