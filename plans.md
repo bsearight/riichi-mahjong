@@ -3,8 +3,8 @@
 ## Short-Term Goals
 
 - ~~Implement tests for all existing modules to ensure code reliability.~~ (Completed)
-- Add additional tests for edge cases to patch oversights.
-- Finalize the yaku detection module to cover all standard yaku.
+- ~~Add additional tests for edge cases to patch oversights.~~ (Completed)
+- ~~Finalize the yaku detection module to cover all standard yaku.~~ (Completed)
 - Complete the scoring module to calculate hand scores based on detected yaku.
 - Modify parse to tolerate precompleted Sets from calls during gameplay.
 - Develop a complete progression that utilizes all currently implemented features.
